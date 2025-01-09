@@ -1,0 +1,9 @@
+tg_token: "7357859330:AAEO7WHzIDH70TwK9YLAyoI2zn_Ux59PNVw"
+
+postgres:
+  driver: postgres
+  host: "0.0.0.0"
+  user: "root"
+  pass: "secret"
+  name: "finance_bot"
+  port: 5432
