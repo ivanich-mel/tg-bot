@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -28,6 +29,7 @@ func Init() (*Config, error) {
 	if err := unmarshal(&config); err != nil {
 		return nil, err
 	}
+	config.BotToken = os.Getenv("TGBOT_TOKEN")
 	return &config, nil
 }
 
@@ -52,5 +54,12 @@ func unmarshal(config *Config) error {
 	return nil
 }
 func (p *PostgresConfig) GetDBSource() string {
-	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", p.User, p.Pass, p.Host, p.Port, p.Name)
+	return fmt.Sprintf(
+		"postgresql://%s:%s@%s:%s/%s?sslmode=disable",
+		p.User,
+		p.Pass,
+		p.Host,
+		p.Port,
+		p.Name,
+	)
 }
