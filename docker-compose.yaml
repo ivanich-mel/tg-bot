@@ -2,7 +2,8 @@ version: "3.8"
 
 services:
   app:
-    image: ghcr.io/ivanich-mel/tg-bot/tg_bot:latest
+    image: ivanichmel/tg-bot:latest
+    pull_policy: never
     container_name: tg_bot_app
     restart: always
     ports:
