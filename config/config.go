@@ -3,63 +3,54 @@ package config
 import (
 	"fmt"
 	"os"
-
-	"github.com/spf13/viper"
 )
 
 type Config struct {
-	BotToken string `mapstructure:"tg_token"`
+	BotToken string
 	DB       PostgresConfig
 }
+
 type PostgresConfig struct {
-	Driver string `mapstructure:"driver"`
-	Host   string `mapstructure:"host"`
-	User   string `mapstructure:"user"`
-	Pass   string `mapstructure:"pass"`
-	Name   string `mapstructure:"name"`
-	Port   string `mapstructure:"port"`
+	Driver string
+	Url    string
 }
 
 func Init() (*Config, error) {
-	var config Config
+	dbConfig, err := initPostgresConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize Postgres config: %w", err)
+	}
 
-	if err := setViper(); err != nil {
-		return nil, err
+	botToken := os.Getenv("TG_BOT_TOKEN")
+	if botToken == "" {
+		return nil, fmt.Errorf("missing required environment variable: TG_BOT_TOKEN")
 	}
-	if err := unmarshal(&config); err != nil {
-		return nil, err
-	}
-	config.BotToken = os.Getenv("TGBOT_TOKEN")
-	return &config, nil
+
+	return &Config{
+		BotToken: botToken,
+		DB:       *dbConfig,
+	}, nil
 }
 
-func setViper() error {
-	viper.AddConfigPath(".")
-	viper.SetConfigName("config")
-
-	if err := viper.ReadInConfig(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func unmarshal(config *Config) error {
-	if err := viper.Unmarshal(&config); err != nil {
-		return err
+func initPostgresConfig() (*PostgresConfig, error) {
+	requiredVars := []string{
+		"DB_DRIVER",
+		"DB_URL",
 	}
 
-	if err := viper.UnmarshalKey("postgres", &config.DB); err != nil {
-		return err
+	missingVars := []string{}
+	for _, varName := range requiredVars {
+		if os.Getenv(varName) == "" {
+			missingVars = append(missingVars, varName)
+		}
 	}
-	return nil
-}
-func (p *PostgresConfig) GetDBSource() string {
-	return fmt.Sprintf(
-		"postgresql://%s:%s@%s:%s/%s?sslmode=disable",
-		p.User,
-		p.Pass,
-		p.Host,
-		p.Port,
-		p.Name,
-	)
+
+	if len(missingVars) > 0 {
+		return nil, fmt.Errorf("missing required environment variables: %v", missingVars)
+	}
+
+	return &PostgresConfig{
+		Driver: os.Getenv("DB_DRIVER"),
+		Url:    os.Getenv("DB_URL"),
+	}, nil
 }

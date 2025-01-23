@@ -22,7 +22,7 @@ func main() {
 	}
 	botApi.Debug = true
 
-	conn, err := sql.Open(conf.DB.Driver, conf.DB.GetDBSource())
+	conn, err := sql.Open(conf.DB.Driver, conf.DB.Url)
 	if err != nil {
 		log.Fatal("cannot connect to db:", err)
 	}
