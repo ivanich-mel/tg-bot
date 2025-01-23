@@ -1,6 +1,6 @@
 #!bin/bash
 
-cd /path/to/your/project
+cd ~/app/tg_bot
 
 git pull origin main
 
