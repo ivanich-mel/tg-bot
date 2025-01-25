@@ -15,30 +15,33 @@ echo "Switched to directory: $(pwd)"
 if [ ! -d .git ]; then
   echo "Initializing git repository..."
   git init
-  git remote add origin git@github.com:yourusername/your-repo.git  # Замените на ваш репозиторий
+  git remote add origin git@github.com:yourusername/your-repo.git 
 fi
 
 echo "Pulling latest changes..."
 git fetch origin
 git reset --hard origin/main
 
-
 if [ ! -f Dockerfile ]; then
   echo "Dockerfile not found in the directory. Exiting."
   exit 1
 fi
 
-
 echo "Building Docker image..."
 docker build -t ivanichmel/tg-bot:latest .
 
-
-if [ ! -f docker-compose.yml ]; then
-  echo "docker-compose.yml not found in the directory. Exiting."
+echo "Bringing down existing services..."
+if ! docker-compose down; then
+  echo "Error: Failed to bring down existing services."
   exit 1
 fi
 
-echo "Starting services with docker-compose..."
-docker-compose up -d --build
+echo "Building and starting services..."
+if ! docker-compose up -d --build; then
+  echo "Error: Failed to build or start services."
+  exit 1
+fi
+
+echo "Services started successfully!"й
 
 echo "Deployment completed successfully!"
