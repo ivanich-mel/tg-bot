@@ -1,9 +1,11 @@
 -- name: CreateCategory :one
 INSERT INTO categories (
   name,
-  balance
+  balance,
+  permanent_balance
+
 ) VALUES (
-  $1, $2
+  $1, $2, $3
 ) RETURNING *;
 
 -- name: GetCategory :one
@@ -18,9 +20,14 @@ OFFSET $2;
 
 -- name: UpdateCategory :exec
 UPDATE categories
-SET name = $2, balance = $3
+SET
+    name = $2,
+    balance = $3,
+    permanent_balance = CASE
+        WHEN $4 <> 0 THEN $4
+        ELSE permanent_balance
+    END
 WHERE id = $1;
-
 -- name: DeleteCategory :exec
 DELETE FROM categories
 WHERE id = $1;

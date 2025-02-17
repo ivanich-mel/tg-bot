@@ -7,8 +7,9 @@ import (
 )
 
 type Category struct {
-	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
-	Balance   float64   `json:"balance"`
-	CreatedAt time.Time `json:"created_at"`
+	ID               int64     `json:"id"`
+	Name             string    `json:"name"`
+	Balance          float64   `json:"balance"`
+	PermanentBalance float64   `json:"permanent_balance"`
+	CreatedAt        time.Time `json:"created_at"`
 }

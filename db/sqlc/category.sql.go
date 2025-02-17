@@ -10,24 +10,28 @@ import (
 const createCategory = `-- name: CreateCategory :one
 INSERT INTO categories (
   name,
-  balance
+  balance,
+  permanent_balance
+
 ) VALUES (
-  $1, $2
-) RETURNING id, name, balance, created_at
+  $1, $2, $3
+) RETURNING id, name, balance, permanent_balance, created_at
 `
 
 type CreateCategoryParams struct {
-	Name    string  `json:"name"`
-	Balance float64 `json:"balance"`
+	Name             string  `json:"name"`
+	Balance          float64 `json:"balance"`
+	PermanentBalance float64 `json:"permanent_balance"`
 }
 
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error) {
-	row := q.db.QueryRowContext(ctx, createCategory, arg.Name, arg.Balance)
+	row := q.db.QueryRowContext(ctx, createCategory, arg.Name, arg.Balance, arg.PermanentBalance)
 	var i Category
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Balance,
+		&i.PermanentBalance,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -44,7 +48,7 @@ func (q *Queries) DeleteCategory(ctx context.Context, id int64) error {
 }
 
 const getCategory = `-- name: GetCategory :one
-SELECT id, name, balance, created_at FROM categories
+SELECT id, name, balance, permanent_balance, created_at FROM categories
 WHERE id = $1 LIMIT 1
 `
 
@@ -55,13 +59,14 @@ func (q *Queries) GetCategory(ctx context.Context, id int64) (Category, error) {
 		&i.ID,
 		&i.Name,
 		&i.Balance,
+		&i.PermanentBalance,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const listCategories = `-- name: ListCategories :many
-SELECT id, name, balance, created_at FROM categories
+SELECT id, name, balance, permanent_balance, created_at FROM categories
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -85,6 +90,7 @@ func (q *Queries) ListCategories(ctx context.Context, arg ListCategoriesParams) 
 			&i.ID,
 			&i.Name,
 			&i.Balance,
+			&i.PermanentBalance,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -102,17 +108,29 @@ func (q *Queries) ListCategories(ctx context.Context, arg ListCategoriesParams) 
 
 const updateCategory = `-- name: UpdateCategory :exec
 UPDATE categories
-SET name = $2, balance = $3
+SET
+    name = $2,
+    balance = $3,
+    permanent_balance = CASE
+        WHEN $4 <> 0 THEN $4
+        ELSE permanent_balance
+    END
 WHERE id = $1
 `
 
 type UpdateCategoryParams struct {
-	ID      int64   `json:"id"`
-	Name    string  `json:"name"`
-	Balance float64 `json:"balance"`
+	ID      int64       `json:"id"`
+	Name    string      `json:"name"`
+	Balance float64     `json:"balance"`
+	Column4 interface{} `json:"column_4"`
 }
 
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, updateCategory, arg.ID, arg.Name, arg.Balance)
+	_, err := q.db.ExecContext(ctx, updateCategory,
+		arg.ID,
+		arg.Name,
+		arg.Balance,
+		arg.Column4,
+	)
 	return err
 }

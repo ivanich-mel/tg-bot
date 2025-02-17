@@ -1,20 +1,26 @@
 package telegram
 
-const helpMsg = `Привет! 👋 
+const startMsg = `Welcome to the Finance Tracker Bot! 💰
 
-Здесь мы ведем учет наших покупок за месяц и контролируем, сколько денег тратим на определенные категории покупок.
+✅ Create or edit categories  
+✅ Track balance  
+✅ Update categories automatically  
 
-Для начала работы с ботом введи(нажми):
+Choose an option below: ⬇️`
 
-		/start - Начать работу с ботом`
-
-const startMsg = `
-Что ты хочешь сделать?
-	
-	/create - Создать новую категорию покупок 
-	/list - Посмотреть список всех категорий
-	/change - Изменить категорию
-	/delete - Удалить категорию
-	
-	/start - Показать это сообщение
-	/help - Начать все сначала =)`
+const listCategoriesBalanceMsg = "🐶 Name:                    💶 Balance:        "
+const listCategoriesPermanentBalanceMsg = "🐶 Name:                     📛 Allowance:            "
+const listCategoriesDeleteMsg = "🐶 Name:"
+const deleteCategoryMsg = "⚠️ Are you sure you want to delete this category? This action cannot be undone! ❌"
+const updateBalancesMsg = "⚠️ Are you sure you want to update balances? This action cannot be undone! ❌"
+const deleteCategorySuccessMsg = "The category '%s' has been successfully deleted. ✅"
+const defaultCallbackMsg = "Oops! 😕 Something went wrong while processing your request. Please try again later."
+const defaultCommandMsg = "🚀 Oops! This command doesn’t exist. Try again! 😉"
+const createCategoryMsg = "📂 Enter the category name 👇👇👇"
+const enterReceiptMsg = "💰 Enter the receipt amount 👇👇👇"
+const enterAllowanceBalanceMsg = "💸 Please enter the amount you plan to spend this month 👇👇👇"
+const incorrectNumberBalanceMsg = "⚠️ Please enter a numerical value for the balance."
+const updateBalanceSuccessMsg = "🎉 Balance for category '%s' updated successfully! 💸"
+const categoryCreatedMsg = "🎉 Category '%s' created successfully!"
+const unknownErrorMsg = "❗️ An unknown error occurred. Please try again later."
+const updateBalancesSuccessMsg = "🎉 Balances for all categories have been updated successfully! 💸"

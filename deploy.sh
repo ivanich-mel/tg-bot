@@ -15,7 +15,7 @@ echo "Switched to directory: $(pwd)"
 if [ ! -d .git ]; then
   echo "Initializing git repository..."
   git init
-  git remote add origin git@github.com:yourusername/your-repo.git 
+  git remote add origin git@github.com:ivanich-mel/tg-bot.git
 fi
 
 echo "Pulling latest changes..."
@@ -42,6 +42,6 @@ if ! docker-compose up -d --build; then
   exit 1
 fi
 
-echo "Services started successfully!"й
+echo "Services started successfully!"
 
 echo "Deployment completed successfully!"
