@@ -24,3 +24,4 @@ const updateBalanceSuccessMsg = "🎉 Balance for category '%s' updated successf
 const categoryCreatedMsg = "🎉 Category '%s' created successfully!"
 const unknownErrorMsg = "❗️ An unknown error occurred. Please try again later."
 const updateBalancesSuccessMsg = "🎉 Balances for all categories have been updated successfully! 💸"
+const emptyListcategoriesMsg = "Oops! 😲 It looks like there are no categories yet... But no worries! 🎉 Create a new one and get started! 🚀"
