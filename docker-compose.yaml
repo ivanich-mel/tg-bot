@@ -29,7 +29,7 @@ services:
       sh -c "
       migrate -path /app/migration -database ${POSTGRES_URL} up && exit 0 || exit 1"
     volumes:
-      - ./db/migration:/app/migration
+      - ./db/migrations:/app/migrations
 
   app:
     image: ivanichmel/tg-bot:latest
