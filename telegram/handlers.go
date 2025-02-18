@@ -13,14 +13,19 @@ import (
 )
 
 const (
-	startCmd = "start"
+	startCmd          = "start"
+	createCategoryCmd = "create_category"
+	listBalancesCmd   = "list_balances"
+	listLimitsCmd     = "list_limits"
+	updateBalancesCmd = "update_balances"
 
-	updateBalancesCallBack = "callback_update_balances"
-	listCategoriesCallBack = "callback_list_categories"
-	listLimitsCallBack     = "callback_list_limits"
-	createCategoryCallBack = "callback_create_category"
-	deleteCategoryCallBack = "callback_delete_category"
-	renameCategoryCallback = "callback_rename_category"
+	updateBalancesCallBack       = "callback_update_balances"
+	listCategoriesCallBack       = "callback_list_categories"
+	listLimitsCallBack           = "callback_list_limits"
+	createCategoryCallBack       = "callback_create_category"
+	deleteCategoryCallBack       = "callback_delete_category"
+	renameCategoryCallback       = "callback_rename_category"
+	changeCategoryLimitsCallback = "callback_change_limit_category"
 
 	addNameState                = "state_add_name"
 	renameCategoryState         = "state_rename_category"
@@ -44,6 +49,14 @@ func (b *tgBot) handleCommand(msg *tgbotapi.Message) error {
 	switch msg.Command() {
 	case startCmd:
 		return b.handleStartCmd(chatID)
+	case createCategoryCmd:
+		return b.handleCreateCetegoryCmd(chatID)
+	case listBalancesCmd:
+		return b.handleListBalancesCmd(chatID)
+	case listLimitsCmd:
+		return b.handleListLimitsCmd(chatID)
+	case updateBalancesCmd:
+		return b.handleUpdateBalancesCmd(chatID)
 	default:
 		return b.sendMessage(msg.Chat.ID, defaultCommandMsg)
 	}
@@ -62,9 +75,6 @@ func (b *tgBot) handleStartCmd(chatID int64) error {
 		tgbotapi.NewInlineKeyboardButtonData("⚠️  List limits", listLimitsCallBack),
 	))
 	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("❌ Delete category", deleteCategoryCallBack),
-	))
-	rows = append(rows, tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("🔄 Update balances", updateBalancesAction),
 	))
 
@@ -74,6 +84,22 @@ func (b *tgBot) handleStartCmd(chatID int64) error {
 	if _, err := b.bot.Send(message); err != nil {
 		log.Printf("failed to send message: %v", err)
 	}
+	return nil
+}
+func (b *tgBot) handleCreateCetegoryCmd(chatID int64) error {
+	b.handleCreateCategoryCallback(chatID)
+	return nil
+}
+func (b *tgBot) handleListBalancesCmd(chatID int64) error {
+	b.handleListCategoriesCallback(chatID)
+	return nil
+}
+func (b *tgBot) handleListLimitsCmd(chatID int64) error {
+	b.handleListLimitsCallback(chatID)
+	return nil
+}
+func (b *tgBot) handleUpdateBalancesCmd(chatID int64) error {
+	b.handleUpdateBalancesAction(chatID)
 	return nil
 }
 
@@ -100,6 +126,9 @@ func (b *tgBot) handleCallback(callbackQuery *tgbotapi.CallbackQuery) error {
 	case strings.HasPrefix(data, renameCategoryCallback):
 		categoryID, _ := parseCategoryID(data, renameCategoryCallback+"_")
 		b.handleRenameCategoryCallback(chatID, categoryID)
+	case strings.HasPrefix(data, changeCategoryLimitsCallback):
+		categoryID, _ := parseCategoryID(data, changeCategoryLimitsCallback+"_")
+		b.changeCategoryLimitsCallback(chatID, categoryID)
 	case data == deleteCategoryDeclineAction:
 		b.handleStartCmd(chatID)
 	case data == createCategoryCallBack:
@@ -210,9 +239,10 @@ func (b *tgBot) handleUpdateBalancesApproveAction(chatID int64) error {
 
 	for _, c := range categories {
 		err := b.db.UpdateCategory(context.Background(), db.UpdateCategoryParams{
-			ID:      c.ID,
-			Name:    c.Name,
-			Balance: c.PermanentBalance,
+			ID:               c.ID,
+			Name:             c.Name,
+			Balance:          c.PermanentBalance,
+			PermanentBalance: c.PermanentBalance,
 		})
 		if err != nil {
 			log.Printf("Error updating category %s: %v", c.Name, err)
@@ -240,6 +270,20 @@ func (b *tgBot) handleChangeBalanceState(chatID int64, categoryID int64) error {
 	state.UpdateeCategoryState.ID = categoryID
 
 	b.sendMessage(chatID, enterReceiptMsg)
+	return nil
+}
+func (b *tgBot) changeCategoryLimitsCallback(chatID int64, categoryID int64) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	state, exists := b.userStates[chatID]
+	if !exists {
+		state = &UserState{}
+		b.userStates[chatID] = state
+	}
+	state.State = changeCategoriesLimitsState
+	state.UpdateeCategoryState.ID = categoryID
+
+	b.sendMessage(chatID, enterLimitMsg)
 	return nil
 }
 func (b *tgBot) handleCategoryOptionsAction(chatID int64, categoryID int64) error {
@@ -337,7 +381,7 @@ func (b *tgBot) handleMessage(msg *tgbotapi.Message) error {
 			PermanentBalance: state.CreateCategoryState.Balance,
 		})
 		if err != nil {
-			log.Printf("Ошибка при создании категории: %v", err)
+			log.Printf("failed to create category: %v", err)
 			b.sendMessage(chatID, unknownErrorMsg)
 			return nil
 		}
@@ -361,9 +405,10 @@ func (b *tgBot) handleMessage(msg *tgbotapi.Message) error {
 		}
 		state.UpdateeCategoryState.Balance = c.Balance - subtractive
 		err = b.db.UpdateCategory(context.Background(), db.UpdateCategoryParams{
-			ID:      c.ID,
-			Name:    c.Name,
-			Balance: state.UpdateeCategoryState.Balance,
+			ID:               c.ID,
+			Name:             c.Name,
+			Balance:          state.UpdateeCategoryState.Balance,
+			PermanentBalance: c.PermanentBalance,
 		})
 		if err != nil {
 			log.Printf("failed to create category: %v", err)
@@ -377,6 +422,35 @@ func (b *tgBot) handleMessage(msg *tgbotapi.Message) error {
 		if _, err := b.bot.Send(msg); err != nil {
 			log.Printf("failed to send message: %v", err)
 		}
+	case changeCategoriesLimitsState:
+		newLimit, err := strconv.ParseFloat(msg.Text, 32)
+		if err != nil {
+			b.sendMessage(chatID, incorrectNumberBalanceMsg)
+			return nil
+		}
+		c, err := b.db.GetCategory(context.Background(), state.UpdateeCategoryState.ID)
+		if err != nil {
+			log.Printf("failed to get category: %v", err)
+			return nil
+		}
+		err = b.db.UpdateCategory(context.Background(), db.UpdateCategoryParams{
+			ID:               c.ID,
+			Name:             c.Name,
+			Balance:          c.Balance,
+			PermanentBalance: newLimit,
+		})
+		if err != nil {
+			log.Printf("failed to update category: %v", err)
+			b.sendMessage(chatID, unknownErrorMsg)
+			return nil
+		}
+		delete(b.userStates, chatID)
+
+		msg := tgbotapi.NewMessage(chatID, fmt.Sprintf(updateLimitSuccessMsg, c.Name))
+		msg.ReplyMarkup = b.listCategoriesLimitsKeyboard(100, 0)
+		if _, err := b.bot.Send(msg); err != nil {
+			log.Printf("failed to send message: %v", err)
+		}
 	case renameCategoryState:
 		categoryName := msg.Text
 		fmt.Println(categoryName)
@@ -386,9 +460,10 @@ func (b *tgBot) handleMessage(msg *tgbotapi.Message) error {
 			return nil
 		}
 		err = b.db.UpdateCategory(context.Background(), db.UpdateCategoryParams{
-			ID:      c.ID,
-			Name:    categoryName,
-			Balance: c.Balance,
+			ID:               c.ID,
+			Name:             categoryName,
+			Balance:          c.Balance,
+			PermanentBalance: c.PermanentBalance,
 		})
 		if err != nil {
 			log.Printf("failed to create category: %v", err)
@@ -424,7 +499,7 @@ func (b *tgBot) listCategoriesBalanceKeyboard(limit int32, offset int32) tgbotap
 		balance := fmt.Sprintf("%.2f", category.Balance)
 		total += category.Balance
 		if category.Balance <= 0 {
-			balance = fmt.Sprintf("%s %s", balance, "❗️💣")
+			balance = fmt.Sprintf("%s %s", balance, "❗️❗️❗️")
 		}
 		row := tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData(category.Name, categoryOptionsAction),
@@ -476,7 +551,7 @@ func (b *tgBot) listCategoriesLimitsKeyboard(limit int32, offset int32) tgbotapi
 	var rows [][]tgbotapi.InlineKeyboardButton
 	for _, category := range categories {
 		changeNameCallback := fmt.Sprintf("%s_%d", categoryOptionsAction, category.ID)
-		changePermanentBalanceCallback := fmt.Sprintf("%s_%d", changeCategoriesLimitsState, category.ID)
+		changePermanentBalanceCallback := fmt.Sprintf("%s_%d", changeCategoryLimitsCallback, category.ID)
 
 		row := tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData(category.Name, changeNameCallback),

@@ -15,7 +15,7 @@ INSERT INTO categories (
 
 ) VALUES (
   $1, $2, $3
-) RETURNING id, name, balance, permanent_balance, created_at
+) RETURNING id, name, balance, created_at, permanent_balance
 `
 
 type CreateCategoryParams struct {
@@ -31,8 +31,8 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 		&i.ID,
 		&i.Name,
 		&i.Balance,
-		&i.PermanentBalance,
 		&i.CreatedAt,
+		&i.PermanentBalance,
 	)
 	return i, err
 }
@@ -48,7 +48,7 @@ func (q *Queries) DeleteCategory(ctx context.Context, id int64) error {
 }
 
 const getCategory = `-- name: GetCategory :one
-SELECT id, name, balance, permanent_balance, created_at FROM categories
+SELECT id, name, balance, created_at, permanent_balance FROM categories
 WHERE id = $1 LIMIT 1
 `
 
@@ -59,14 +59,14 @@ func (q *Queries) GetCategory(ctx context.Context, id int64) (Category, error) {
 		&i.ID,
 		&i.Name,
 		&i.Balance,
-		&i.PermanentBalance,
 		&i.CreatedAt,
+		&i.PermanentBalance,
 	)
 	return i, err
 }
 
 const listCategories = `-- name: ListCategories :many
-SELECT id, name, balance, permanent_balance, created_at FROM categories
+SELECT id, name, balance, created_at, permanent_balance FROM categories
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -90,8 +90,8 @@ func (q *Queries) ListCategories(ctx context.Context, arg ListCategoriesParams) 
 			&i.ID,
 			&i.Name,
 			&i.Balance,
-			&i.PermanentBalance,
 			&i.CreatedAt,
+			&i.PermanentBalance,
 		); err != nil {
 			return nil, err
 		}
@@ -111,18 +111,15 @@ UPDATE categories
 SET
     name = $2,
     balance = $3,
-    permanent_balance = CASE
-        WHEN $4 <> 0 THEN $4
-        ELSE permanent_balance
-    END
+    permanent_balance = $4
 WHERE id = $1
 `
 
 type UpdateCategoryParams struct {
-	ID      int64       `json:"id"`
-	Name    string      `json:"name"`
-	Balance float64     `json:"balance"`
-	Column4 interface{} `json:"column_4"`
+	ID               int64   `json:"id"`
+	Name             string  `json:"name"`
+	Balance          float64 `json:"balance"`
+	PermanentBalance float64 `json:"permanent_balance"`
 }
 
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error {
@@ -130,7 +127,7 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 		arg.ID,
 		arg.Name,
 		arg.Balance,
-		arg.Column4,
+		arg.PermanentBalance,
 	)
 	return err
 }

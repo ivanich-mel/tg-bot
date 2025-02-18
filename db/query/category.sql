@@ -23,10 +23,7 @@ UPDATE categories
 SET
     name = $2,
     balance = $3,
-    permanent_balance = CASE
-        WHEN $4 <> 0 THEN $4
-        ELSE permanent_balance
-    END
+    permanent_balance = $4
 WHERE id = $1;
 -- name: DeleteCategory :exec
 DELETE FROM categories
