@@ -304,8 +304,14 @@ func (b *tgBot) handleCategoryOptionsAction(chatID int64, categoryID int64) erro
 		}
 	}
 	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("✏️ Rename", fmt.Sprintf("%s_%d", renameCategoryCallback, categoryID)),
-		tgbotapi.NewInlineKeyboardButtonData("❌ Delete", fmt.Sprintf("%s_%d", deleteCategoryAction, categoryID)),
+		tgbotapi.NewInlineKeyboardButtonData(
+			"✏️ Rename",
+			fmt.Sprintf("%s_%d", renameCategoryCallback, categoryID),
+		),
+		tgbotapi.NewInlineKeyboardButtonData(
+			"❌ Delete",
+			fmt.Sprintf("%s_%d", deleteCategoryAction, categoryID),
+		),
 	)
 
 	rows = append(rows, row)
@@ -323,7 +329,10 @@ func (b *tgBot) handleDeleteCategotyAction(chatID int64, categoryID int64) error
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("Yes", fmt.Sprintf("%s_%d", deleteCategoryApproveAction, categoryID)),
+		tgbotapi.NewInlineKeyboardButtonData(
+			"Yes",
+			fmt.Sprintf("%s_%d", deleteCategoryApproveAction, categoryID),
+		),
 		tgbotapi.NewInlineKeyboardButtonData("No", deleteCategoryDeclineAction),
 	)
 	rows = append(rows, row)
@@ -481,7 +490,10 @@ func (b *tgBot) handleMessage(msg *tgbotapi.Message) error {
 	return nil
 }
 
-func (b *tgBot) listCategoriesBalanceKeyboard(limit int32, offset int32) tgbotapi.InlineKeyboardMarkup {
+func (b *tgBot) listCategoriesBalanceKeyboard(
+	limit int32,
+	offset int32,
+) tgbotapi.InlineKeyboardMarkup {
 	categories, err := b.db.ListCategories(context.Background(), db.ListCategoriesParams{
 		Offset: offset,
 		Limit:  limit,
@@ -498,7 +510,7 @@ func (b *tgBot) listCategoriesBalanceKeyboard(limit int32, offset int32) tgbotap
 		changeBalanceCallback := fmt.Sprintf("%s_%d", changeBalanceState, category.ID)
 		balance := fmt.Sprintf("%.2f", category.Balance)
 		total += category.Balance
-		if category.Balance <= 0 {
+		if category.Balance < 0 {
 			balance = fmt.Sprintf("%s %s", balance, "❗️❗️❗️")
 		}
 		row := tgbotapi.NewInlineKeyboardRow(
@@ -515,7 +527,11 @@ func (b *tgBot) listCategoriesBalanceKeyboard(limit int32, offset int32) tgbotap
 	rows = append(rows, row)
 	return tgbotapi.NewInlineKeyboardMarkup(rows...)
 }
-func (b *tgBot) listCategoriesDeleteKeyboard(limit int32, offset int32) tgbotapi.InlineKeyboardMarkup {
+
+func (b *tgBot) listCategoriesDeleteKeyboard(
+	limit int32,
+	offset int32,
+) tgbotapi.InlineKeyboardMarkup {
 	categories, err := b.db.ListCategories(context.Background(), db.ListCategoriesParams{
 		Offset: offset,
 		Limit:  limit,
@@ -538,7 +554,10 @@ func (b *tgBot) listCategoriesDeleteKeyboard(limit int32, offset int32) tgbotapi
 	return tgbotapi.NewInlineKeyboardMarkup(rows...)
 }
 
-func (b *tgBot) listCategoriesLimitsKeyboard(limit int32, offset int32) tgbotapi.InlineKeyboardMarkup {
+func (b *tgBot) listCategoriesLimitsKeyboard(
+	limit int32,
+	offset int32,
+) tgbotapi.InlineKeyboardMarkup {
 	categories, err := b.db.ListCategories(context.Background(), db.ListCategoriesParams{
 		Offset: offset,
 		Limit:  limit,
@@ -548,17 +567,30 @@ func (b *tgBot) listCategoriesLimitsKeyboard(limit int32, offset int32) tgbotapi
 		return tgbotapi.InlineKeyboardMarkup{}
 	}
 
+	var total float64 = 0
 	var rows [][]tgbotapi.InlineKeyboardButton
 	for _, category := range categories {
 		changeNameCallback := fmt.Sprintf("%s_%d", categoryOptionsAction, category.ID)
-		changePermanentBalanceCallback := fmt.Sprintf("%s_%d", changeCategoryLimitsCallback, category.ID)
-
+		changePermanentBalanceCallback := fmt.Sprintf(
+			"%s_%d",
+			changeCategoryLimitsCallback,
+			category.ID,
+		)
+		total += category.PermanentBalance
 		row := tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData(category.Name, changeNameCallback),
-			tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%.0f", category.PermanentBalance), changePermanentBalanceCallback),
+			tgbotapi.NewInlineKeyboardButtonData(
+				fmt.Sprintf("%.0f", category.PermanentBalance),
+				changePermanentBalanceCallback,
+			),
 		)
 		rows = append(rows, row)
 	}
+	row := tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("📊 Total:", "total"),
+		tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%.0f", total), "total"),
+	)
+	rows = append(rows, row)
 
 	return tgbotapi.NewInlineKeyboardMarkup(rows...)
 }
