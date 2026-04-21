@@ -1,8 +1,10 @@
 package telegram
 
 import (
-	db "melnik/telegram-bot/db/sqlc"
+	"context"
 	"sync"
+
+	db "melnik/telegram-bot/db/sqlc"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -28,24 +30,31 @@ func NewBot(bot *tgbotapi.BotAPI, db *db.Queries) *tgBot {
 	}
 }
 
-func (b *tgBot) Start() error {
+func (b *tgBot) Start(ctx context.Context) error {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
 	updates := b.bot.GetUpdatesChan(u)
-
-	for update := range updates {
-		if update.CallbackQuery != nil {
-			b.handleCallback(update.CallbackQuery)
-		}
-		if update.Message != nil {
-			if update.Message.IsCommand() {
-				b.handleCommand(update.Message)
-			} else {
-				b.handleMessage(update.Message)
+	defer b.bot.StopReceivingUpdates()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case update, ok := <-updates:
+			if !ok {
+				return nil
 			}
+			if update.CallbackQuery != nil {
+				b.handleCallback(update.CallbackQuery)
+			}
+			if update.Message != nil {
+				if update.Message.IsCommand() {
+					b.handleCommand(update.Message)
+				} else {
+					b.handleMessage(update.Message)
+				}
+			}
+
 		}
 	}
-
-	return nil
 }

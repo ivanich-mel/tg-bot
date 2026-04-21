@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	db "melnik/telegram-bot/db/sqlc"
 	"strconv"
 	"strings"
+
+	db "melnik/telegram-bot/db/sqlc"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -86,18 +87,22 @@ func (b *tgBot) handleStartCmd(chatID int64) error {
 	}
 	return nil
 }
+
 func (b *tgBot) handleCreateCetegoryCmd(chatID int64) error {
 	b.handleCreateCategoryCallback(chatID)
 	return nil
 }
+
 func (b *tgBot) handleListBalancesCmd(chatID int64) error {
 	b.handleListCategoriesCallback(chatID)
 	return nil
 }
+
 func (b *tgBot) handleListLimitsCmd(chatID int64) error {
 	b.handleListLimitsCallback(chatID)
 	return nil
 }
+
 func (b *tgBot) handleUpdateBalancesCmd(chatID int64) error {
 	b.handleUpdateBalancesAction(chatID)
 	return nil
@@ -167,6 +172,7 @@ func (b *tgBot) handleCreateCategoryCallback(chatID int64) error {
 	}
 	return nil
 }
+
 func (b *tgBot) handleRenameCategoryCallback(chatID int64, categoryID int64) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -181,6 +187,7 @@ func (b *tgBot) handleRenameCategoryCallback(chatID int64, categoryID int64) err
 	b.sendMessage(chatID, renameCategoryMsg)
 	return nil
 }
+
 func (b *tgBot) handleListCategoriesCallback(chatID int64) error {
 	message := tgbotapi.NewMessage(chatID, listCategoriesBalanceMsg)
 	message.ReplyMarkup = b.listCategoriesBalanceKeyboard(100, 0)
@@ -189,6 +196,7 @@ func (b *tgBot) handleListCategoriesCallback(chatID int64) error {
 	}
 	return nil
 }
+
 func (b *tgBot) handleListLimitsCallback(chatID int64) error {
 	message := tgbotapi.NewMessage(chatID, listCategoriesPermanentBalanceMsg)
 	message.ReplyMarkup = b.listCategoriesLimitsKeyboard(100, 0)
@@ -197,6 +205,7 @@ func (b *tgBot) handleListLimitsCallback(chatID int64) error {
 	}
 	return nil
 }
+
 func (b *tgBot) handleDeleteCategoryCallback(chatID int64) error {
 	message := tgbotapi.NewMessage(chatID, listCategoriesDeleteMsg)
 	message.ReplyMarkup = b.listCategoriesDeleteKeyboard(100, 0)
@@ -205,6 +214,7 @@ func (b *tgBot) handleDeleteCategoryCallback(chatID int64) error {
 	}
 	return nil
 }
+
 func (b *tgBot) handleDeleteCategoryApproveAction(chatID int64, categoryID int64) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -225,6 +235,7 @@ func (b *tgBot) handleDeleteCategoryApproveAction(chatID int64, categoryID int64
 	}
 	return nil
 }
+
 func (b *tgBot) handleUpdateBalancesApproveAction(chatID int64) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -258,6 +269,7 @@ func (b *tgBot) handleUpdateBalancesApproveAction(chatID int64) error {
 
 	return nil
 }
+
 func (b *tgBot) handleChangeBalanceState(chatID int64, categoryID int64) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -272,6 +284,7 @@ func (b *tgBot) handleChangeBalanceState(chatID int64, categoryID int64) error {
 	b.sendMessage(chatID, enterReceiptMsg)
 	return nil
 }
+
 func (b *tgBot) changeCategoryLimitsCallback(chatID int64, categoryID int64) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -286,6 +299,7 @@ func (b *tgBot) changeCategoryLimitsCallback(chatID int64, categoryID int64) err
 	b.sendMessage(chatID, enterLimitMsg)
 	return nil
 }
+
 func (b *tgBot) handleCategoryOptionsAction(chatID int64, categoryID int64) error {
 	var rows [][]tgbotapi.InlineKeyboardButton
 
@@ -343,6 +357,7 @@ func (b *tgBot) handleDeleteCategotyAction(chatID int64, categoryID int64) error
 	}
 	return nil
 }
+
 func (b *tgBot) handleUpdateBalancesAction(chatID int64) error {
 	var rows [][]tgbotapi.InlineKeyboardButton
 
@@ -594,6 +609,7 @@ func (b *tgBot) listCategoriesLimitsKeyboard(
 
 	return tgbotapi.NewInlineKeyboardMarkup(rows...)
 }
+
 func (b *tgBot) sendMessage(chatID int64, text string) (err error) {
 	if chatID == 0 {
 		return errors.New("chatID cannot be zero")
@@ -608,6 +624,7 @@ func (b *tgBot) sendMessage(chatID int64, text string) (err error) {
 	}
 	return nil
 }
+
 func parseCategoryID(data string, prefix string) (int64, error) {
 	if !strings.HasPrefix(data, prefix) {
 		return 0, fmt.Errorf("invalid prefix")
